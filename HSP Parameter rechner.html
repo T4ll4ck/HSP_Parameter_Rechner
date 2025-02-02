@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hansen-Parameter Rechner</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: space-around;
+        padding: 20px;
+      }
+      .input,
+      .output {
+        width: 45%;
+      }
+      input,
+      select,
+      button {
+        margin: 10px 0;
+        width: 100%;
+        padding: 5px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="input">
+      <h2>Eingabe</h2>
+      <select id="solvent">
+        <option value="">Lösemittel auswählen</option>
+        <option value="acetone">Aceton</option>
+        <option value="mek">Methylethylketon</option>
+        <option value="thf">Tetrahydrofuran</option>
+        <option value="dmf">Dimethylformamid</option>
+        <option value="cyclohexane">Cyclohexan</option>
+        <option value="toluene">Toluol</option>
+      </select>
+      <select id="polymer">
+        <option value="">Polymer auswählen</option>
+        <option value="abs124">ABS (1:2:4)</option>
+        <option value="abs40SAN">ABS (40SAN)</option>
+        <option value="absCR">ABS CR</option>
+        <option value="pc">PC</option>
+        <option value="polybutadiene">Polybutadien</option>
+        <option value="polystyrene">Polystyrol</option>
+        <option value="polyacrylonitrile">Polyacrylnitril</option>
+      </select>
+      <button onclick="calculate()">Berechnen</button>
+    </div>
+    <div class="output">
+      <h2>Ergebnis</h2>
+      <div id="result"></div>
+    </div>
+
+    <script>
+      const solvents = {
+        acetone: { name: "Aceton", δd: 15.5, δp: 10.4, δh: 7.0, δt: 20.1 },
+        mek: { name: "Methylethylketon", δd: 16.0, δp: 9.0, δh: 5.1, δt: 19.0 },
+        thf: { name: "Tetrahydrofuran", δd: 16.8, δp: 5.7, δh: 8.0, δt: 19.4 },
+        dmf: {
+          name: "Dimethylformamid",
+          δd: 17.4,
+          δp: 13.7,
+          δh: 11.3,
+          δt: 24.9,
+        },
+        cyclohexane: {
+          name: "Cyclohexan",
+          δd: 16.8,
+          δp: 0.0,
+          δh: 0.2,
+          δt: 16.8,
+        },
+        toluene: { name: "Toluol", δd: 18.0, δp: 1.4, δh: 2.0, δt: 18.2 },
+      }
+
+      const polymers = {
+        abs124: {
+          name: "ABS (1:2:4)",
+          δd: 21.72,
+          δp: 8.56,
+          δh: 3.89,
+          R0: 12.8,
+        },
+        abs40SAN: {
+          name: "ABS (40SAN)",
+          δd: 20.04,
+          δp: 10.59,
+          δh: 5.06,
+          R0: 11.8,
+        },
+        absCR: { name: "ABS CR", δd: 16.3, δp: 2.7, δh: 7.1, R0: 7.8 },
+        pc: { name: "PC", δd: 18.1, δp: 5.9, δh: 6.9, R0: 8.5 },
+        polybutadiene: {
+          name: "Polybutadien",
+          δd: 17.0,
+          δp: 0.0,
+          δh: 1.0,
+          R0: 9.0,
+        },
+        polystyrene: {
+          name: "Polystyrol",
+          δd: 18.6,
+          δp: 1.0,
+          δh: 4.1,
+          R0: 11.0,
+        },
+        polyacrylonitrile: {
+          name: "Polyacrylnitril",
+          δd: 18.2,
+          δp: 16.2,
+          δh: 6.8,
+          R0: 10.5,
+        },
+      }
+
+      function calculate() {
+        const solventSelect = document.getElementById("solvent")
+        const polymerSelect = document.getElementById("polymer")
+        const resultElement = document.getElementById("result")
+
+        const solvent = solvents[solventSelect.value]
+        const polymer = polymers[polymerSelect.value]
+
+        if (!solvent || !polymer) {
+          resultElement.innerHTML =
+            "Bitte wählen Sie ein Lösemittel und ein Polymer aus."
+          return
+        }
+
+        const Ra = Math.sqrt(
+          4 * (solvent.δd - polymer.δd) ** 2 +
+            (solvent.δp - polymer.δp) ** 2 +
+            (solvent.δh - polymer.δh) ** 2,
+        )
+
+        const RED = Ra / polymer.R0
+
+        let compatibility
+        if (RED < 1) {
+          compatibility = "Hohe Löslichkeit"
+        } else if (RED < 1.1) {
+          compatibility = "Wahrscheinlich löslich"
+        } else {
+          compatibility = "Geringe oder keine Löslichkeit"
+        }
+
+        resultElement.innerHTML = `
+                <table>
+                    <tr><th colspan="2">Hansen-Parameter für ${solvent.name}</th></tr>
+                    <tr><td>δd</td><td>${solvent.δd.toFixed(2)} MPa<sup>1/2</sup></td></tr>
+                    <tr><td>δp</td><td>${solvent.δp.toFixed(2)} MPa<sup>1/2</sup></td></tr>
+                    <tr><td>δh</td><td>${solvent.δh.toFixed(2)} MPa<sup>1/2</sup></td></tr>
+                    <tr><td>δt</td><td>${solvent.δt.toFixed(2)} MPa<sup>1/2</sup></td></tr>
+                </table>
+                <br>
+                <table>
+                    <tr><th colspan="2">Hansen-Parameter für ${polymer.name}</th></tr>
+                    <tr><td>δd</td><td>${polymer.δd.toFixed(2)} MPa<sup>1/2</sup></td></tr>
+                    <tr><td>δp</td><td>${polymer.δp.toFixed(2)} MPa<sup>1/2</sup></td></tr>
+                    <tr><td>δh</td><td>${polymer.δh.toFixed(2)} MPa<sup>1/2</sup></td></tr>
+                </table>
+                <br>
+                <table>
+                    <tr><th colspan="2">Ergebnis</th></tr>
+                    <tr><td>Ra</td><td>${Ra.toFixed(2)} MPa<sup>1/2</sup></td></tr>
+                    <tr><td>R0</td><td>${polymer.R0.toFixed(2)} MPa<sup>1/2</sup></td></tr>
+                    <tr><td>RED</td><td>${RED.toFixed(2)}</td></tr>
+                    <tr><td>Kompatibilität</td><td>${compatibility}</td></tr>
+                </table>
+            `
+      }
+    </script>
+  </body>
+</html>
